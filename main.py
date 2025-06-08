@@ -1,34 +1,21 @@
-from fastapi import FastAPI, Query
-from playwright.sync_api import sync_playwright
-import os
-import subprocess
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from playwright.async_api import async_playwright
 
 app = FastAPI()
 
-# Instala navegadores de Playwright si no están ya instalados
-def ensure_playwright_browsers_installed():
-    try:
-        subprocess.run(["playwright", "install"], check=True)
-    except Exception as e:
-        print(f"Error installing playwright browsers: {e}")
 
-ensure_playwright_browsers_installed()
+@app.get("/")
+async def root():
+    return {"message": "API online"}
 
-@app.get("/track-product")
-def track_product(url: str = Query(..., description="URL del producto a analizar")):
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.goto(url, timeout=60000)
-            html = page.content()
-            browser.close()
-        return {
-            "message": "Página cargada correctamente",
-            "html_length": len(html)
-        }
-    except Exception as e:
-        return {
-            "message": "Error al cargar la página",
-            "error": str(e)
-        }
+
+@app.get("/scrape")
+async def scrape():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page()
+        await page.goto("https://example.com")
+        title = await page.title()
+        await browser.close()
+        return JSONResponse(content={"title": title})
