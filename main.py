@@ -1,5 +1,11 @@
-from fastapi import Query
+from fastapi import FastAPI, Query
 from playwright.async_api import async_playwright
+
+app = FastAPI()
+
+@app.get("/")
+def read_root():
+    return {"message": "API online"}
 
 @app.get("/scrape")
 async def scrape(url: str = Query(..., description="URL a scrapear")):
