@@ -1,21 +1,15 @@
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi import Query
 from playwright.async_api import async_playwright
 
-app = FastAPI()
-
-
-@app.get("/")
-async def root():
-    return {"message": "API online"}
-
-
 @app.get("/scrape")
-async def scrape():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        page = await browser.new_page()
-        await page.goto("https://example.com")
-        title = await page.title()
-        await browser.close()
-        return JSONResponse(content={"title": title})
+async def scrape(url: str = Query(..., description="URL a scrapear")):
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            await page.goto(url)
+            content = await page.content()
+            await browser.close()
+            return {"status": "ok", "content": content}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
